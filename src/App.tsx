@@ -229,9 +229,6 @@ function ProjectModal({
               Tutup
             </button>
           </div>
-          <p className="modal-note">
-            Informasi bersifat contoh pada template demonstrasi.
-          </p>
         </div>
       </div>
     </dialog>
