@@ -1,5 +1,16 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, ArrowUpRight, Check, Menu, X } from "lucide-react";
+import {
+  ArrowRight,
+  ArrowUpRight,
+  Check,
+  Compass,
+  Hammer,
+  Menu,
+  Plus,
+  ShieldCheck,
+  Wallet,
+  X,
+} from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 
 type Category = "Semua" | "Perumahan" | "Rumah Pribadi";
@@ -52,12 +63,95 @@ const projects = [
 
 type Project = (typeof projects)[number];
 
+// Isi dengan nomor WhatsApp format internasional tanpa tanda +, mis. "6281234567890".
+// Selama kosong, formulir hanya menampilkan pratinjau pesan (mode demo).
+const WHATSAPP_NUMBER = "";
+const GENERAL_INTEREST = "Konsultasi umum";
+
+const stats = [
+  { value: "10+", label: "Tahun pengalaman" },
+  { value: "250+", label: "Unit direncanakan" },
+  { value: "12", label: "Proyek kawasan" },
+  { value: "98%", label: "Penghuni puas" },
+];
+
+const benefits = [
+  {
+    icon: ShieldCheck,
+    title: "Legalitas jelas",
+    text: "Status lahan, izin, dan sertifikat dijelaskan sejak awal agar Anda tenang.",
+  },
+  {
+    icon: Hammer,
+    title: "Kualitas terjaga",
+    text: "Material terpilih dan pengawasan berkala di setiap tahap pembangunan.",
+  },
+  {
+    icon: Wallet,
+    title: "Pembayaran fleksibel",
+    text: "Pilihan tunai, cicilan bertahap, atau KPR dengan simulasi yang transparan.",
+  },
+  {
+    icon: Compass,
+    title: "Layanan purnajual",
+    text: "Masa garansi dan pendampingan setelah serah terima kunci.",
+  },
+];
+
+const steps = [
+  {
+    title: "Konsultasi",
+    text: "Ceritakan kebutuhan, anggaran, dan gaya hidup Anda.",
+  },
+  {
+    title: "Kunjungan lokasi",
+    text: "Lihat kawasan dan contoh hunian secara langsung.",
+  },
+  {
+    title: "Desain & akad",
+    text: "Finalisasi tipe, spesifikasi, dan skema pembayaran.",
+  },
+  {
+    title: "Pembangunan",
+    text: "Progres dilaporkan berkala dengan jadwal yang jelas.",
+  },
+  {
+    title: "Serah terima",
+    text: "Pemeriksaan akhir bersama sebelum Anda menempati rumah.",
+  },
+];
+
+const faqs = [
+  {
+    q: "Apakah tersedia pembelian dengan KPR?",
+    a: "Ya. Kami membantu simulasi cicilan dan pengajuan KPR ke bank rekanan. Pembelian tunai dan cicilan bertahap juga tersedia.",
+  },
+  {
+    q: "Sertifikat apa yang diterima pembeli?",
+    a: "Status sertifikat dijelaskan per proyek sebelum akad, termasuk proses pemecahan dan balik nama.",
+  },
+  {
+    q: "Berapa biaya pemesanan awal?",
+    a: "Biaya pemesanan berbeda untuk setiap proyek dan tipe. Tim kami akan memberikan rincian saat konsultasi.",
+  },
+  {
+    q: "Berapa lama waktu pembangunan?",
+    a: "Umumnya 8 hingga 14 bulan tergantung tipe dan tahap proyek. Jadwal tertulis diberikan sebelum akad.",
+  },
+  {
+    q: "Apakah desain rumah dapat disesuaikan?",
+    a: "Untuk rumah pribadi, desain disusun sesuai lahan dan kebutuhan. Pada perumahan, tersedia pilihan tata ruang dan finishing tertentu.",
+  },
+];
+
 function ProjectModal({
   project,
   onClose,
+  onSchedule,
 }: {
   project: Project;
   onClose: () => void;
+  onSchedule: (project: Project) => void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = `modal-title-${project.image}`;
@@ -119,7 +213,11 @@ function ProjectModal({
             <a
               href="#kunjungan"
               className="button"
-              onClick={() => ref.current?.close()}
+              onClick={(e) => {
+                e.preventDefault();
+                ref.current?.close();
+                onSchedule(project);
+              }}
             >
               Jadwalkan Kunjungan <ArrowRight size={20} />
             </a>
@@ -165,6 +263,97 @@ function Photo({
     />
   );
 }
+function VisitForm({
+  interest,
+  onInterestChange,
+}: {
+  interest: string;
+  onInterestChange: (value: string) => void;
+}) {
+  const [preview, setPreview] = useState<string | null>(null);
+  const today = new Date().toISOString().slice(0, 10);
+
+  return (
+    <form
+      className="visit-form"
+      onSubmit={(e) => {
+        e.preventDefault();
+        const data = new FormData(e.currentTarget);
+        const lines = [
+          "Halo Aruna Land, saya ingin menjadwalkan kunjungan.",
+          `Nama: ${data.get("name")}`,
+          `Telepon: ${data.get("phone")}`,
+          `Minat: ${interest}`,
+          data.get("date") ? `Tanggal pilihan: ${data.get("date")}` : "",
+          data.get("note") ? `Catatan: ${data.get("note")}` : "",
+        ].filter(Boolean);
+        const text = lines.join("\n");
+        if (WHATSAPP_NUMBER) {
+          window.open(
+            `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`,
+            "_blank",
+            "noopener",
+          );
+          setPreview(null);
+        } else {
+          setPreview(text);
+        }
+      }}
+    >
+      <label>
+        <span>Nama lengkap</span>
+        <input name="name" type="text" autoComplete="name" required />
+      </label>
+      <label>
+        <span>Nomor telepon / WhatsApp</span>
+        <input
+          name="phone"
+          type="tel"
+          autoComplete="tel"
+          inputMode="tel"
+          pattern="[0-9+\s\-]{8,18}"
+          title="Masukkan nomor telepon yang valid"
+          required
+        />
+      </label>
+      <div className="form-row">
+        <label>
+          <span>Proyek yang diminati</span>
+          <select
+            value={interest}
+            onChange={(e) => onInterestChange(e.target.value)}
+          >
+            {projects.map((p) => (
+              <option key={p.name} value={p.name}>
+                {p.name}
+              </option>
+            ))}
+            <option value={GENERAL_INTEREST}>{GENERAL_INTEREST}</option>
+          </select>
+        </label>
+        <label>
+          <span>Tanggal kunjungan (opsional)</span>
+          <input name="date" type="date" min={today} />
+        </label>
+      </div>
+      <label>
+        <span>Catatan (opsional)</span>
+        <textarea name="note" rows={3} />
+      </label>
+      <button type="submit" className="button">
+        {WHATSAPP_NUMBER ? "Kirim via WhatsApp" : "Kirim permintaan"}{" "}
+        <ArrowRight size={20} />
+      </button>
+      {preview && (
+        <div className="form-preview" role="status">
+          <strong>Mode demo: nomor WhatsApp belum diatur.</strong>
+          <p>Pesan yang akan dikirim:</p>
+          <pre>{preview}</pre>
+        </div>
+      )}
+    </form>
+  );
+}
 function Brand() {
   return (
     <a
@@ -183,6 +372,7 @@ function App() {
   const [filter, setFilter] = useState<Category>("Semua");
   const [menu, setMenu] = useState(false);
   const [selected, setSelected] = useState<Project | null>(null);
+  const [interest, setInterest] = useState(GENERAL_INTEREST);
   const reduceMotion = useReducedMotion();
   const visible = projects.filter(
     (p) => filter === "Semua" || p.category === filter,
@@ -203,6 +393,9 @@ function App() {
           </a>
           <a onClick={() => setMenu(false)} href="#pendekatan">
             Pendekatan
+          </a>
+          <a onClick={() => setMenu(false)} href="#faq">
+            FAQ
           </a>
           <a
             onClick={() => setMenu(false)}
@@ -270,6 +463,16 @@ function App() {
             </figcaption>
           </figure>
         </section>
+        <section className="stats section-rule" aria-label="Angka perusahaan">
+          <dl>
+            {stats.map((s) => (
+              <div key={s.label}>
+                <dd>{s.value}</dd>
+                <dt>{s.label}</dt>
+              </div>
+            ))}
+          </dl>
+        </section>
         <section
           id="portofolio"
           className="portfolio section-rule"
@@ -332,6 +535,25 @@ function App() {
           </div>
         </section>
         <section
+          id="keunggulan"
+          className="benefits section-rule"
+          aria-labelledby="benefits-title"
+        >
+          <h2 id="benefits-title">Alasan memilih Aruna Land.</h2>
+          <p className="section-intro">
+            Hal-hal yang kami jaga agar keputusan Anda terasa tenang.
+          </p>
+          <div className="benefit-grid">
+            {benefits.map(({ icon: Icon, title, text }) => (
+              <div key={title} className="benefit">
+                <Icon aria-hidden="true" size={26} strokeWidth={1.4} />
+                <h3>{title}</h3>
+                <p>{text}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+        <section
           id="tentang"
           className="approach section-rule"
           aria-labelledby="approach-title"
@@ -364,25 +586,78 @@ function App() {
             </div>
           </div>
         </section>
-        <section id="kunjungan" className="visit section-rule">
+        <section
+          id="proses"
+          className="process section-rule"
+          aria-labelledby="process-title"
+        >
+          <h2 id="process-title">Dari percakapan hingga kunci rumah.</h2>
+          <ol className="steps">
+            {steps.map((s, i) => (
+              <li key={s.title}>
+                <span aria-hidden="true">{String(i + 1).padStart(2, "0")}</span>
+                <h3>{s.title}</h3>
+                <p>{s.text}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
+        <section
+          id="faq"
+          className="faq section-rule"
+          aria-labelledby="faq-title"
+        >
           <div>
-            <h2>Mari lihat lebih dekat.</h2>
-            <p>Kenali hunian dan diskusikan rencana Anda bersama tim kami.</p>
-            <p className="demo-notice">
-              Ini adalah template demonstrasi. Kontak kunjungan belum tersedia.
+            <h2 id="faq-title">Pertanyaan yang sering diajukan.</h2>
+            <p className="section-intro">
+              Belum menemukan jawabannya? Tanyakan langsung kepada tim kami.
             </p>
           </div>
-          <button className="button disabled-button" disabled>
-            Jadwalkan Kunjungan <ArrowRight size={20} />
-          </button>
+          <div className="faq-list">
+            {faqs.map((f) => (
+              <details key={f.q}>
+                <summary>
+                  {f.q}
+                  <Plus aria-hidden="true" size={20} strokeWidth={1.5} />
+                </summary>
+                <p>{f.a}</p>
+              </details>
+            ))}
+          </div>
+        </section>
+        <section
+          id="kunjungan"
+          className="contact section-rule"
+          aria-labelledby="contact-title"
+        >
+          <div className="contact-copy">
+            <h2 id="contact-title">Mari lihat lebih dekat.</h2>
+            <p>Kenali hunian dan diskusikan rencana Anda bersama tim kami.</p>
+            <ul>
+              <li>Konsultasi tanpa biaya dan tanpa kewajiban</li>
+              <li>Tim kami menghubungi dalam 1 x 24 jam kerja</li>
+              <li>Kunjungan dapat dijadwalkan akhir pekan</li>
+            </ul>
+          </div>
+          <VisitForm interest={interest} onInterestChange={setInterest} />
         </section>
       </main>
       {selected && (
-        <ProjectModal project={selected} onClose={() => setSelected(null)} />
+        <ProjectModal
+          project={selected}
+          onClose={() => setSelected(null)}
+          onSchedule={(p) => {
+            setInterest(p.name);
+            window.setTimeout(() => {
+              document
+                .getElementById("kunjungan")
+                ?.scrollIntoView({ behavior: "smooth" });
+            }, 60);
+          }}
+        />
       )}
       <footer className="footer wrap">
         <strong>ARUNA LAND</strong>
-        <span>Konsep template properti Indonesia</span>
         <span>Develop by jasawebsite.id.</span>
       </footer>
     </div>
